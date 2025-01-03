@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Download Page</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header>
+        <h1>Download Scanventory</h1>
+    </header>
+    <main>
+        <section>
+            <h2>Download Page</h2>
+            <p>The latest version of the app is available below:</p>
+            <div id="download-section">
+                <p>Fetching the latest release...</p>
+            </div>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2025 Your Name. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Replace <username> and <repo> with your GitHub username and repository name
+        const apiUrl = "https://api.github.com/repos/VKx64/Scanventory/releases/latest";
+
+        fetch(apiUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Failed to fetch release data");
+                }
+                return response.json();
+            })
+            .then(data => {
+                const assets = data.assets;
+                const downloadSection = document.getElementById("download-section");
+
+                if (assets && assets.length > 0) {
+                    const apkAsset = assets.find(asset => asset.name.endsWith(".apk"));
+                    if (apkAsset) {
+                        downloadSection.innerHTML = `
+              <a href="${apkAsset.browser_download_url}" class="download-button" download>Download App</a>
+              <p>Version: ${data.tag_name}</p>
+            `;
+                    } else {
+                        downloadSection.innerHTML = "<p>No APK found in the latest release.</p>";
+                    }
+                } else {
+                    downloadSection.innerHTML = "<p>No release assets found.</p>";
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching release data:", error);
+                document.getElementById("download-section").innerHTML = "<p>Failed to fetch release information.</p>";
+            });
+    </script>
+</body>
+
+</html>
