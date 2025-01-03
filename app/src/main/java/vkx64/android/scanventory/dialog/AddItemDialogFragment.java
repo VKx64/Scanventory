@@ -1,7 +1,8 @@
 package vkx64.android.scanventory.dialog;
 
+import static androidx.core.content.ContentProviderCompat.requireContext;
+
 import android.app.Dialog;
-import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputFilter;
 import android.util.DisplayMetrics;
@@ -10,8 +11,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -19,74 +18,63 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 
 import vkx64.android.scanventory.R;
-import vkx64.android.scanventory.utilities.SingleImagePicker;
 
-public class AddGroupDialogFragment extends DialogFragment {
+public class AddItemDialogFragment extends DialogFragment {
 
-    private AddGroupDialogListener listener;
-    private Uri selectedImageUri;
-    private ImageView ivImageGroup;
+    private AddItemDialogListener listener;
 
-    public interface AddGroupDialogListener {
+    public interface AddItemDialogListener {
         //* Listener interface for form submission *//
-        void onSubmit(String groupId, String groupName);
+        void onSubmit(String itemId, String itemName, String itemCategory, int itemStorage, int itemSelling);
     }
 
-    public AddGroupDialogFragment(AddGroupDialogListener listener) {
+    public AddItemDialogFragment(AddItemDialogListener listener) {
         //* Constructor to set the listener *//
         this.listener = listener;
     }
 
-    @Nullable
-    @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         // Inflate the layout for the dialog
-        View view = inflater.inflate(R.layout.dialog_add_group, container, false);
+        View view = inflater.inflate(R.layout.dialog_add_item, container, false);
 
         // Initialize views
-        EditText etGroupId = view.findViewById(R.id.etGroupId);
-        EditText etGroupName = view.findViewById(R.id.etGroupName);
+        EditText etItemId = view.findViewById(R.id.etItemId);
+        EditText etItemName = view.findViewById(R.id.etItemName);
+        EditText etItemCategory = view.findViewById(R.id.etItemCategory);
+        EditText etItemStorage = view.findViewById(R.id.etItemStorage);
+        EditText etItemSelling = view.findViewById(R.id.etItemSelling);
         Button btnCancel = view.findViewById(R.id.btnCancel);
         Button btnSubmit = view.findViewById(R.id.btnSubmit);
-        ivImageGroup = view.findViewById(R.id.ivImageGroup);
 
-        // Cancel button closes the dialog
         btnCancel.setOnClickListener(v -> dismiss());
 
-        // Handle ImageView click to select an image
-        ivImageGroup.setOnClickListener(v -> SingleImagePicker.openImageSelector(this));
-
-        // Submit button validates input and sends data
         btnSubmit.setOnClickListener(v -> {
+            // Get input values
+            String itemId = etItemId.getText().toString().trim();
+            String itemName = etItemName.getText().toString().trim();
+            String itemCategory = etItemCategory.getText().toString().trim();
+            String itemStorage = etItemStorage.getText().toString().trim();
+            String itemSelling = etItemSelling.getText().toString().trim();
 
-            String groupId = etGroupId.getText().toString().trim();
-            String groupName = etGroupName.getText().toString().trim();
+            int storageValue = Integer.parseInt(itemStorage);
+            int sellingValue = Integer.parseInt(itemSelling);
 
-            if (groupId.isEmpty() || groupName.isEmpty()) {
+            // Validate inputs
+            if (itemId.isEmpty() || itemName.isEmpty()) {
                 Toast.makeText(requireContext(), "Please fill in all fields", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // Save the selected image to internal storage
-            if (selectedImageUri != null) {
-                SingleImagePicker.saveImageToInternalStorage(
-                        selectedImageUri,
-                        "GroupImages",
-                        groupId + ".png",
-                        requireContext()
-                );
-            }
-
-            if (listener != null) listener.onSubmit(groupId, groupName);
+            if (listener != null) listener.onSubmit(itemId, itemName, itemCategory, storageValue, sellingValue);
             dismiss();
         });
 
         // Set a filter to reject spaces in the Group ID
-        etGroupId.setFilters(new InputFilter[]{(source, start, end, dest, dstart, dend) -> {
+        etItemId.setFilters(new InputFilter[]{(source, start, end, dest, dstart, dend) -> {
             // Check for spaces and reject them
             for (int i = start; i < end; i++) {
                 if (Character.isWhitespace(source.charAt(i))) {
-                    Toast.makeText(requireContext(), "Spaces are not allowed in Group ID.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), "Spaces are not allowed in Item ID.", Toast.LENGTH_SHORT).show();
                     return "";
                 }
             }
@@ -95,16 +83,6 @@ public class AddGroupDialogFragment extends DialogFragment {
         });
 
         return view;
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, @Nullable android.content.Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        // Handle the result from the image picker
-        selectedImageUri = SingleImagePicker.handleImagePickerResult(requestCode, resultCode, data, requireContext());
-        if (selectedImageUri != null) {
-            SingleImagePicker.displayImage(selectedImageUri, ivImageGroup, requireContext());
-        }
     }
 
     @NonNull

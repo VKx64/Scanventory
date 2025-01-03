@@ -7,16 +7,28 @@
     android:orientation="horizontal"
     android:background="@color/background"
     tools:ignore="HardcodedText"
-    android:paddingVertical="16dp">
+    android:paddingVertical="8dp">
 
-    <ImageView
-        android:id="@+id/ivGroupImage"
-        android:layout_width="30dp"
-        android:layout_height="24dp"
-        android:contentDescription="Folder Icon"
-        android:src="@drawable/ic_folder"
-        app:tint="@color/hints" />
+    <!-- Product Card View Container -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="center_vertical"
+        app:cardElevation="0dp"
+        app:cardCornerRadius="5dp">
 
+        <!-- Product Image -->
+        <ImageView
+            android:id="@+id/ivGroupImage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/im_placeholder"
+            android:contentDescription="Product Image"
+            android:scaleType="centerCrop"/>
+
+    </androidx.cardview.widget.CardView>
+
+    <!-- Group Name -->
     <TextView
         android:id="@+id/tvGroupName"
         android:layout_width="wrap_content"

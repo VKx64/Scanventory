@@ -6,7 +6,9 @@ import androidx.room.RoomDatabase;
 @Database(
         entities = {
                 TableGroups.class,
-                TableItems.class
+                TableItems.class,
+                TableOrders.class,
+                TableOrderItems.class
         },
         version = 1,
         exportSchema = false
@@ -14,4 +16,6 @@ import androidx.room.RoomDatabase;
 public abstract class AppDatabase extends RoomDatabase {
     public abstract DaoGroups daoGroups();
     public abstract DaoItems daoItems();
+    public abstract DaoOrders daoOrders();
+    public abstract DaoOrderItems daoOrderItems();
 }

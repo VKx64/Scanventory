@@ -38,6 +38,16 @@ dependencies {
     annotationProcessor(libs.room.compiler)
     androidTestImplementation(libs.room.testing)
 
+    // XLSX Parser
+    implementation(libs.poi.ooxml)
+
+    // QR Scanner
+    implementation(libs.zxing.android.embedded)
+
+    // Glide
+    implementation("com.github.bumptech.glide:glide:4.15.1")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.15.1")
+
     // Pull to refresh
     implementation(libs.swiperefreshlayout)
 
