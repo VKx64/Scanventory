@@ -6,6 +6,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.core.graphics.Insets;
@@ -20,6 +21,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import vkx64.android.scanventory.adapter.ScannedItemsAdapter;
@@ -42,7 +44,9 @@ public class OrderActivity extends AppCompatActivity implements QRScanner.QRScan
     private RecyclerView rvItemList;
     private ScannedItemsAdapter adapter;
 
-    private CardView cvCompleteOrder;
+    private CardView cvCompleteOrder, cvCancelOrder;
+
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,7 +60,6 @@ public class OrderActivity extends AppCompatActivity implements QRScanner.QRScan
         });
 
         initializeRecyclerView();
-        generateOrderId();
         initializeViews();
 
         // Initialize QRScanner
@@ -78,12 +81,21 @@ public class OrderActivity extends AppCompatActivity implements QRScanner.QRScan
         tvHeader = findViewById(R.id.tvHeader);
         tvHeader.setText("Order ID: " + orderId);
 
+        cvCancelOrder = findViewById(R.id.cvCancelOrder);
+        cvCancelOrder.setOnClickListener(v -> finish());
+
         cvCompleteOrder = findViewById(R.id.cvCompleteOrder);
-        cvCompleteOrder.setOnClickListener(v -> completeOrder());
+        cvCompleteOrder.setOnClickListener(v -> {
+            if (scannedItems.isEmpty()) {
+                Toast.makeText(this, "Order is Empty!", Toast.LENGTH_SHORT).show();
+            } else {
+                completeOrder();
+            }
+        });
     }
 
     private void generateOrderId() {
-        Executors.newSingleThreadExecutor().execute(() -> {
+        executor.execute(() -> {
             // Get the database instance from AppClient
             AppDatabase appDatabase = AppClient.getInstance(getApplicationContext()).getAppDatabase();
 
@@ -98,7 +110,9 @@ public class OrderActivity extends AppCompatActivity implements QRScanner.QRScan
     }
 
     private void completeOrder() {
-        new Thread(() -> {
+        executor.execute(() -> {
+            generateOrderId();
+
             AppDatabase db = AppClient.getInstance(getApplicationContext()).getAppDatabase();
             DaoOrderItems daoOrderItems = db.daoOrderItems();
             DaoItems daoItems = db.daoItems();
@@ -121,11 +135,12 @@ public class OrderActivity extends AppCompatActivity implements QRScanner.QRScan
                 }
             }
 
+            // Update UI on the main thread
             runOnUiThread(() -> {
                 Toast.makeText(this, "Order Completed", Toast.LENGTH_SHORT).show();
                 finish();
             });
-        }).start();
+        });
     }
 
     @Override
@@ -154,6 +169,13 @@ public class OrderActivity extends AppCompatActivity implements QRScanner.QRScan
     protected void onResume() {
         super.onResume();
         qrScanner.resumeScanner();
+    }
+
+    // Shutdown the executor when the activity is destroyed to avoid leaks
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        executor.shutdownNow();
     }
 
     @Override

@@ -80,7 +80,7 @@ public class GalleryAdapter extends RecyclerView.Adapter<GalleryAdapter.ImageVie
         }
 
         void bindPlusButton() {
-            ivImage.setImageResource(R.drawable.ic_upload);
+            ivImage.setImageResource(R.drawable.ic_square_plus);
 
             ivImage.setOnClickListener(v -> {
                 if (addImageClickListener != null) {

@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
     private SwipeRefreshLayout srItemList;
     private ImageButton ibNewFolder, ibNewItem, ivSettings;
     private EditText etSearch;
-    private CardView cvNewOrder;
+    private CardView cvNewOrder, cvOrderHistory;
 
     // Adapter
     private MainAdapter mainAdapter;
@@ -58,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
     private final Executor executor = Executors.newSingleThreadExecutor();
 
     // Current group and navigation stack
-    private String currentGroupId = "-1"; // Root group (use "-1" for no parent group)
+    private String currentGroupId = null;
     private final Stack<String> navigationStack = new Stack<>();
 
     private final String TAG = "MainActivity";
@@ -101,6 +101,9 @@ public class MainActivity extends AppCompatActivity {
         cvNewOrder = findViewById(R.id.cvNewOrder);
         cvNewOrder.setOnClickListener(v -> newOrder());
 
+        cvOrderHistory = findViewById(R.id.cvOrderHistory);
+        cvOrderHistory.setOnClickListener(v -> startActivity(new Intent(this, OrderHistoryActivity.class)));
+
         etSearch = findViewById(R.id.etSearch);
         etSearch.addTextChangedListener(new TextWatcher() {
             @Override
@@ -117,24 +120,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void newOrder() {
-        Executors.newSingleThreadExecutor().execute(() -> {
-            // Get the database instance from AppClient
-            AppDatabase appDatabase = AppClient.getInstance(getApplicationContext()).getAppDatabase();
-
-            // Create a new order
-            String currentDate = new SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(new Date());
-            TableOrders newOrder = new TableOrders(0, currentDate);
-
-            // Insert the order and retrieve the generated ID
-            long generatedId = appDatabase.daoOrders().insertOrder(newOrder);
-
-            // Pass the generated order ID to the next activity
-            runOnUiThread(() -> {
-                Intent intent = new Intent(this, OrderActivity.class);
-                intent.putExtra("order_id", (int) generatedId);
-                startActivity(intent);
-            });
-        });
+        Intent intent = new Intent(this, OrderActivity.class);
+        startActivity(intent);
     }
 
     /**
@@ -164,8 +151,9 @@ public class MainActivity extends AppCompatActivity {
             // Combine groups and items into one list
             List<Object> combinedList = new ArrayList<>();
 
-            if (!currentGroupId.equals("-1")) {
-                combinedList.add(new TableGroups("...", "...", null)); // "Return" folder
+            // Return folder implementation
+            if (currentGroupId != null) {
+                combinedList.add(new TableGroups("...", "...", null));
             }
 
             combinedList.addAll(groups);
@@ -179,20 +167,26 @@ public class MainActivity extends AppCompatActivity {
      * Fetch subgroups for the current group ID.
      */
     private List<TableGroups> fetchSubGroups(String parentGroupId) {
-        return AppClient.getInstance(getApplicationContext())
-                .getAppDatabase()
-                .daoGroups()
-                .getSubGroupsByParentId(parentGroupId);
+        AppDatabase appDatabase = AppClient.getInstance(getApplicationContext()).getAppDatabase();
+        if (parentGroupId == null) {
+            return appDatabase.daoGroups().getRootGroups();
+        } else {
+            return appDatabase.daoGroups().getSubGroupsByParentId(parentGroupId);
+        }
     }
 
     /**
      * Fetch items for the current group ID.
      */
     private List<TableItems> fetchItems(String groupId) {
-        return AppClient.getInstance(getApplicationContext())
-                .getAppDatabase()
-                .daoItems()
-                .getItemsByGroupId(groupId);
+        AppDatabase appDatabase = AppClient.getInstance(getApplicationContext()).getAppDatabase();
+        if (groupId == null) {
+            // Fetch root items where group_id is NULL
+            return appDatabase.daoItems().getRootItems();
+        } else {
+            // Fetch items by groupId
+            return appDatabase.daoItems().getItemsByGroupId(groupId);
+        }
     }
 
     /**

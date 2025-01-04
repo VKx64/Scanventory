@@ -33,4 +33,7 @@ public interface DaoGroups {
     // Get a group by ID (used to validate parent group relationships during import)
     @Query("SELECT * FROM groups WHERE group_id = :groupId LIMIT 1")
     TableGroups getGroupById(String groupId);
+
+    @Query("SELECT * FROM groups WHERE group_parent IS NULL")
+    List<TableGroups> getRootGroups();
 }

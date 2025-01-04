@@ -50,4 +50,7 @@ public interface DaoItems {
     @Query("SELECT * FROM items")
     List<TableItems> getAllItems();
 
+    @Query("SELECT * FROM items WHERE group_id IS NULL")
+    List<TableItems> getRootItems();
+
 }

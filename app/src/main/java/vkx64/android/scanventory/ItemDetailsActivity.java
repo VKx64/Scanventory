@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -23,6 +24,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import vkx64.android.scanventory.adapter.GalleryAdapter;
@@ -36,8 +38,9 @@ public class ItemDetailsActivity extends AppCompatActivity {
     private EditText etItemId, etItemName, etItemCategory, etItemStorage, etItemSelling;
     RecyclerView rvGallery;
     private MaterialButton btnSubmit;
+    private ImageButton ibLeftButton;
 
-    private final Executor executor = Executors.newSingleThreadExecutor();
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private String itemId;
     private boolean isDataChanged = false;
@@ -87,6 +90,9 @@ public class ItemDetailsActivity extends AppCompatActivity {
 
         rvGallery = findViewById(R.id.rvGallery);
         rvGallery.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+
+        ibLeftButton = findViewById(R.id.ibLeftButton);
+        ibLeftButton.setOnClickListener(v -> finish());
     }
 
     private void loadGallery() {
@@ -245,5 +251,12 @@ public class ItemDetailsActivity extends AppCompatActivity {
                 Toast.makeText(this, "Item updated successfully", Toast.LENGTH_SHORT).show();
             });
         });
+    }
+
+    // Shutdown the executor when the activity is destroyed to avoid leaks
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        executor.shutdownNow();
     }
 }
