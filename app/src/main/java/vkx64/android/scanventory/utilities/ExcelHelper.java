@@ -60,7 +60,6 @@ public class ExcelHelper {
         header.createCell(1).setCellValue("Name");
         header.createCell(2).setCellValue("Category");
         header.createCell(3).setCellValue("Storage");
-        header.createCell(4).setCellValue("Selling");
         header.createCell(5).setCellValue("Group ID");
         header.createCell(6).setCellValue("Date Created");
         header.createCell(7).setCellValue("Date Updated");
@@ -77,7 +76,6 @@ public class ExcelHelper {
             row.createCell(1).setCellValue(item.getItem_name());
             row.createCell(2).setCellValue(item.getItem_category() != null ? item.getItem_category() : "");
             row.createCell(3).setCellValue(item.getItem_storage() != 0 ? item.getItem_storage() : 0);
-            row.createCell(4).setCellValue(item.getItem_selling() != 0 ? item.getItem_selling() : 0);
             row.createCell(5).setCellValue(item.getGroup_id() != null ? item.getGroup_id() : "");
             row.createCell(6).setCellValue(item.getItem_created() != null ? item.getItem_created() : "");
             row.createCell(7).setCellValue(item.getItem_updated() != null ? item.getItem_updated() : "");
@@ -190,7 +188,6 @@ public class ExcelHelper {
             String itemName = getCellValueAsString(row.getCell(1));
             String category = getCellValueAsString(row.getCell(2));
             Integer storage = getCellValueAsInteger(row.getCell(3));
-            Integer selling = getCellValueAsInteger(row.getCell(4));
             String groupId = getCellValueAsString(row.getCell(5));
             String dateCreated = getCellValueAsString(row.getCell(6));
             String dateUpdated = getCellValueAsString(row.getCell(7));
@@ -211,7 +208,6 @@ public class ExcelHelper {
                     itemName,
                     category != null ? category : "Unknown",
                     storage != null ? storage : 0,
-                    selling != null ? selling : 0,
                     dateCreated != null ? dateCreated : currentDateTime,
                     dateUpdated != null ? dateUpdated : currentDateTime,
                     groupId

@@ -131,7 +131,6 @@ public class OrderActivity extends AppCompatActivity implements QRScanner.QRScan
                 // Update item quantities
                 TableItems item = daoItems.getItemById(itemId);
                 if (item != null) {
-                    item.setItem_selling(item.getItem_selling() - quantity);
                     item.setItem_storage(item.getItem_storage() - quantity);
                     daoItems.updateItem(item);
                 }

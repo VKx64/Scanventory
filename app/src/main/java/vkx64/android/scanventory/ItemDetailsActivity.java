@@ -37,7 +37,7 @@ import vkx64.android.scanventory.utilities.SingleImagePicker;
 
 public class ItemDetailsActivity extends AppCompatActivity {
 
-    private EditText etItemId, etItemName, etItemCategory, etItemStorage, etItemSelling;
+    private EditText etItemId, etItemName, etItemCategory, etItemStorage;
     RecyclerView rvGallery;
     private MaterialButton btnSubmit;
     private ImageButton ibLeftButton;
@@ -79,7 +79,6 @@ public class ItemDetailsActivity extends AppCompatActivity {
         etItemName = findViewById(R.id.etItemName);
         etItemCategory = findViewById(R.id.etItemCategory);
         etItemStorage = findViewById(R.id.etItemStorage);
-        etItemSelling = findViewById(R.id.etItemSelling);
 
         btnSubmit = findViewById(R.id.btnSubmit);
         btnSubmit.setEnabled(false);
@@ -88,7 +87,6 @@ public class ItemDetailsActivity extends AppCompatActivity {
         addTextChangeListener(etItemName);
         addTextChangeListener(etItemCategory);
         addTextChangeListener(etItemStorage);
-        addTextChangeListener(etItemSelling);
 
         rvGallery = findViewById(R.id.rvGallery);
         rvGallery.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
@@ -161,7 +159,6 @@ public class ItemDetailsActivity extends AppCompatActivity {
         etItemName.setText(item.getItem_name());
         etItemCategory.setText(item.getItem_category());
         etItemStorage.setText(String.valueOf(item.getItem_storage()));
-        etItemSelling.setText(String.valueOf(item.getItem_selling()));
 
         btnSubmit.setEnabled(false); // Ensure button stays disabled
         btnSubmit.setBackgroundTintList(getResources().getColorStateList(R.color.hints));
@@ -262,13 +259,11 @@ public class ItemDetailsActivity extends AppCompatActivity {
         String itemName = etItemName.getText().toString().trim();
         String itemCategory = etItemCategory.getText().toString().trim();
         String storageValue = etItemStorage.getText().toString().trim();
-        String sellingValue = etItemSelling.getText().toString().trim();
 
         String categoryToSave = itemCategory.isEmpty() ? null : itemCategory;
 
         // Convert storage and selling values to integers, default to 0 if empty
         int itemStorage = storageValue.isEmpty() ? 0 : Integer.parseInt(storageValue);
-        int itemSelling = sellingValue.isEmpty() ? 0 : Integer.parseInt(sellingValue);
 
         // Validate inputs
         if (itemName.isEmpty()) {
@@ -293,7 +288,6 @@ public class ItemDetailsActivity extends AppCompatActivity {
             existingItem.setItem_name(itemName);
             existingItem.setItem_category(categoryToSave);
             existingItem.setItem_storage(itemStorage);
-            existingItem.setItem_selling(itemSelling);
 
             // Update the item in the database
             AppClient.getInstance(getApplicationContext())
@@ -310,15 +304,6 @@ public class ItemDetailsActivity extends AppCompatActivity {
                 finish();
             });
         });
-    }
-
-    private void updateButtonState(boolean isEnabled) {
-        btnSubmit.setEnabled(isEnabled);
-        if (isEnabled) {
-            btnSubmit.setBackgroundTintList(getResources().getColorStateList(R.color.green)); // Green when enabled
-        } else {
-            btnSubmit.setBackgroundTintList(getResources().getColorStateList(R.color.hints)); // Gray when disabled
-        }
     }
 
     // Shutdown the executor when the activity is destroyed to avoid leaks

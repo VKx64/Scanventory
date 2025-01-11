@@ -61,7 +61,6 @@ public class ScannedItemsAdapter extends RecyclerView.Adapter<ScannedItemsAdapte
             holder.itemView.post(() -> {
                 if (item != null) {
                     holder.tvProductName.setText(item.getItem_name());
-                    holder.tvSellingCount.setText("Selling: " + (item.getItem_selling() - quantity) + "/" + item.getItem_selling());
                     holder.tvQuantity.setText("x" + quantity);
 
                     Log.d("ScannedItemsAdapter", "Setting item details for itemId: " + itemId);
