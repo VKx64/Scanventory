@@ -52,21 +52,38 @@ public class ExcelUtils {
     }
 
     public static void importXlsxToDatabase(Context context, Uri fileUri) {
+        // Open the workbook and handle database operations
         new Thread(() -> {
             try (InputStream inputStream = context.getContentResolver().openInputStream(fileUri)) {
                 Workbook workbook = new XSSFWorkbook(inputStream);
                 Log.d(TAG, "Workbook opened from file: " + fileUri);
 
-                // Import groups first to ensure all references are valid
-                importGroups(context, workbook);
+                // Start a single transaction for the entire import process
+                AppClient.getInstance(context).getAppDatabase().beginTransaction();
 
-                // Import items next
-                importItems(context, workbook);
+                try {
+                    // Import groups first to ensure all references are valid
+                    importGroups(context, workbook);
 
-                notifyOnMainThread(context, "Database imported successfully!", true);
+                    // Import items next
+                    importItems(context, workbook);
+
+                    // Commit the transaction if everything is valid
+                    AppClient.getInstance(context).getAppDatabase().setTransactionSuccessful();
+                    notifyOnMainThread(context, "Database imported successfully!", true);
+
+                } catch (Exception e) {
+                    Log.e(TAG, "Error during import. Rolling back transaction.", e);
+                    notifyOnMainThread(context, "Import failed: " + e.getMessage(), false);
+                    throw e; // Rethrow to ensure rollback happens
+
+                } finally {
+                    // End the transaction (rollback happens automatically if not set successful)
+                    AppClient.getInstance(context).getAppDatabase().endTransaction();
+                }
             } catch (Exception e) {
                 Log.e(TAG, "Failed to import file", e);
-                notifyOnMainThread(context, "Failed to import database: " + e.getMessage(), false);
+//                notifyOnMainThread(context, "Failed to import database: " + e.getMessage(), false);
             }
         }).start();
     }
@@ -97,16 +114,15 @@ public class ExcelUtils {
         Log.d(TAG, "Groups sheet populated successfully");
     }
 
-    private static void importGroups(Context context, Workbook workbook) {
+    private static void importGroups(Context context, Workbook workbook) throws Exception {
         // Constants
         Sheet sheet = workbook.getSheet("Groups");
         DaoGroups daoGroups = AppClient.getInstance(context).getAppDatabase().daoGroups();
         int importedCount = 0;
 
-        // Check if Sheet Exist
+        // Check if Sheet Exists
         if (sheet == null) {
-            Log.e(TAG, "Group Sheet not Found");
-            return;
+            throw new Exception("Group Sheet not Found");
         }
 
         // Iterate through rows
@@ -122,10 +138,9 @@ public class ExcelUtils {
             String groupName = getCellValueAsString(row.getCell(1));
             String parentGroupId = getCellValueAsString(row.getCell(2));
 
-            // if name and id is null skip row
+            // Validation: Skip invalid rows
             if (groupId == null || groupName == null) {
-                Log.w(TAG, "Skipping Invalid Group Row: Missing ID or Name");
-                continue;
+                throw new Exception("Invalid Group Row: Missing ID or Name");
             }
 
             // Data Constructor
@@ -150,6 +165,12 @@ public class ExcelUtils {
         DaoMarkets daoMarkets = AppClient.getInstance(context).getAppDatabase().daoMarkets();
         int rowIndex = 1;
 
+        // Fetch all items from the database
+        List<TableItems> items = daoItems.getAllItems();
+
+        // Fetch all unique market names
+        List<String> allMarkets = daoMarkets.getAllUniqueMarkets(); // A DAO method that retrieves all distinct market names
+
         // Header Rows
         Row header = sheet.createRow(0);
         header.createCell(0).setCellValue("Item ID");
@@ -159,12 +180,14 @@ public class ExcelUtils {
         header.createCell(4).setCellValue("Group ID");
         header.createCell(5).setCellValue("Date Created");
         header.createCell(6).setCellValue("Date Updated");
-        header.createCell(7).setCellValue("Markets");
 
-        // fetch all items from the database
-        List<TableItems> items = daoItems.getAllItems();
+        // Add a header for each unique market with the "Selling:" prefix
+        int marketStartIndex = 7;
+        for (int i = 0; i < allMarkets.size(); i++) {
+            header.createCell(marketStartIndex + i).setCellValue("Selling: " + allMarkets.get(i));
+        }
 
-        // Create rows
+        // Create rows for items
         for (TableItems item : items) {
             Row row = sheet.createRow(rowIndex++);
             row.createCell(0).setCellValue(item.getItem_id());
@@ -178,36 +201,32 @@ public class ExcelUtils {
             // Fetch associated markets for the item
             List<TableMarkets> markets = daoMarkets.getMarketsByItemId(item.getItem_id());
 
-            // Format markets as "Marketplace: Quantity, Marketplace: Quantity, ..."
-            StringBuilder marketsBuilder = new StringBuilder();
-            for (int i = 0; i < markets.size(); i++) {
-                TableMarkets market = markets.get(i);
-                marketsBuilder.append(market.getMarket_name()).append(": ").append(market.getMarket_quantity());
-                if (i < markets.size() - 1) {
-                    marketsBuilder.append(", ");
+            // Map markets to their columns
+            for (TableMarkets market : markets) {
+                for (int i = 0; i < allMarkets.size(); i++) {
+                    if (market.getMarket_name().equals(allMarkets.get(i))) {
+                        row.createCell(marketStartIndex + i).setCellValue(market.getMarket_quantity());
+                    }
                 }
             }
-
-            // Set the Markets cell
-            row.createCell(7).setCellValue(marketsBuilder.toString());
         }
 
-        Log.d(TAG, "Items sheet populated successfully");
+        Log.d(TAG, "Items sheet populated successfully with market columns.");
     }
 
-    private static void importItems(Context context, Workbook workbook) {
+    private static void importItems(Context context, Workbook workbook) throws Exception {
         // Constants
         Sheet sheet = workbook.getSheet("Items");
         DaoItems daoItems = AppClient.getInstance(context).getAppDatabase().daoItems();
         DaoGroups daoGroups = AppClient.getInstance(context).getAppDatabase().daoGroups();
         DaoMarkets daoMarkets = AppClient.getInstance(context).getAppDatabase().daoMarkets();
-        int importedCount = 0;
 
-        // Check if Sheet Exist
+        // Check if Sheet Exists
         if (sheet == null) {
-            Log.e(TAG, "Item Sheet not Found");
-            return;
+            throw new Exception("Item Sheet not Found");
         }
+
+        int importedCount = 0;
 
         // Iterate through rows
         for (Row row : sheet) {
@@ -225,18 +244,15 @@ public class ExcelUtils {
             String groupId = getCellValueAsString(row.getCell(4));
             String dateCreated = getCellValueAsString(row.getCell(5));
             String dateUpdated = getCellValueAsString(row.getCell(6));
-            String markets = getCellValueAsString(row.getCell(7));
+
+            // Validation: Skip invalid rows
+            if (itemId == null || itemName == null) {
+                throw new Exception("Invalid Item Row: Missing ID or Name");
+            }
 
             // Validate Existence and Convert GroupId
             if (groupId != null && daoGroups.getGroupById(groupId) == null) {
-                Log.w(TAG, "Invalid Group ID for Item '" + itemId + "': " + groupId + ". Setting to null.");
-                groupId = null;
-            }
-
-            // if name and id is null skip row
-            if (itemId == null || itemName == null) {
-                Log.w(TAG, "Skipping Invalid Item Row: Missing ID or Name");
-                continue;
+                throw new Exception("Invalid Group ID for Item '" + itemId + "': " + groupId);
             }
 
             // Data Constructor
@@ -254,47 +270,33 @@ public class ExcelUtils {
             daoItems.insertOrUpdateItem(item);
             importedCount++;
 
-            // Insert Markets
-            String[] pairs = markets.split(",\\s*");
-            for (String pair : pairs) {
-                // Split into two parts only to handle market names with colons
-                String[] parts = pair.split(":\\s*", 2);
-                if (parts.length == 2) {
-                    String market = parts[0].trim();
-                    String value = parts[1].trim();
-                    Integer valueInt;
+            // Process Selling: columns (markets)
+            for (int i = 7; i < row.getLastCellNum(); i++) {
+                String columnName = sheet.getRow(0).getCell(i).getStringCellValue();
+                if (columnName.startsWith("Selling: ")) {
+                    String marketName = columnName.substring(9); // Extract market name
+                    Integer marketQuantity = getCellValueAsInteger(row.getCell(i));
 
-                    try {
-                        valueInt = Integer.parseInt(value);
-                    } catch (NumberFormatException e) {
-                        Log.e(TAG, "Invalid quantity for market '" + market + "': " + value, e);
-                        notifyOnMainThread(context, "Invalid quantity for market '" + market + "'. Skipping entry.", false);
-                        continue; // Skip this pair and continue with the next
+                    // Validation: Check if marketQuantity exceeds storage
+                    if (marketQuantity != null && storage != null && marketQuantity > storage) {
+                        throw new Exception("Market quantity (" + marketQuantity + ") exceeds storage (" + storage + ") for Item '" + itemId + "'");
                     }
 
-                    // Compare valueInt with storage
-                    if (storage != null && valueInt > storage) {
-                        Log.d(TAG, "ValueInt (" + valueInt + ") > Storage (" + storage + ") for Item '" + itemId + "'. Setting valueInt to storage.");
-                        valueInt = storage;
-                        notifyOnMainThread(context, "Quantity for '" + market + "' exceeds storage. Setting to " + storage + ".", false);
-                    }
-
-                    TableMarkets item_market = new TableMarkets(
-                            valueInt != null ? Integer.parseInt(value) : 0,
-                            market,
+                    // Insert market data into the TableMarkets database
+                    TableMarkets tableMarket = new TableMarkets(
+                            marketQuantity != null ? marketQuantity : 0,
+                            marketName,
                             itemId
                     );
 
-                    daoMarkets.insertOrUpdateMarket(item_market);
-                } else {
-                    Log.e(TAG, "Invalid market entry format: " + pair);
-                    notifyOnMainThread(context, "Invalid market entry: " + pair, false);
+                    daoMarkets.insertOrUpdateMarket(tableMarket);
                 }
             }
         }
 
         Log.d(TAG, "Imported " + importedCount + " items");
     }
+
 
     private static String getCellValueAsString(Cell cell) {
         // Return null if the cell is either null or blank

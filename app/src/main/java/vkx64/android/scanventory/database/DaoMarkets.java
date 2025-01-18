@@ -45,4 +45,7 @@ public interface DaoMarkets {
 
     @Query("UPDATE market SET market_quantity = :newQuantity WHERE item_id = :itemId AND market_name = :marketName")
     void updateMarketQuantity(String itemId, String marketName, int newQuantity);
+
+    @Query("SELECT DISTINCT market_name FROM market")
+    List<String> getAllUniqueMarkets();
 }

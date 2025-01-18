@@ -91,7 +91,7 @@ public class OrderActivity extends AppCompatActivity implements QRScanner.QRScan
         rvItemList = findViewById(R.id.rvItemList);
         rvItemList.setLayoutManager(new LinearLayoutManager(this));
 
-        adapter = new ScannedItemsAdapter(this, scannedItems);
+        adapter = new ScannedItemsAdapter(this, scannedItems, selectedMarketName);
         rvItemList.setAdapter(adapter);
     }
 
@@ -150,6 +150,9 @@ public class OrderActivity extends AppCompatActivity implements QRScanner.QRScan
                             selectedMarketName = parent.getItemAtPosition(position).toString();
                             Toast.makeText(OrderActivity.this, "Selected Market: " + selectedMarketName, Toast.LENGTH_SHORT).show();
 
+                            // Update the adapter with the new selected market
+                            OrderActivity.this.adapter.setSelectedMarketName(selectedMarketName);
+
                             // Enable scanning
                             qrScanner.resumeScanner();
                         }
@@ -157,6 +160,9 @@ public class OrderActivity extends AppCompatActivity implements QRScanner.QRScan
                         @Override
                         public void onNothingSelected(AdapterView<?> parent) {
                             selectedMarketName = null;
+
+                            // Update the adapter to clear the selected market
+                            OrderActivity.this.adapter.setSelectedMarketName(null);
 
                             // Disable scanning
                             qrScanner.pauseScanner();
@@ -203,7 +209,6 @@ public class OrderActivity extends AppCompatActivity implements QRScanner.QRScan
         executor.execute(() -> {
             AppDatabase db = AppClient.getInstance(getApplicationContext()).getAppDatabase();
             DaoOrderItems daoOrderItems = db.daoOrderItems();
-            DaoItems daoItems = db.daoItems();
             DaoMarkets daoMarkets = db.daoMarkets();
             DaoOrders daoOrders = db.daoOrders();
 
@@ -312,8 +317,6 @@ public class OrderActivity extends AppCompatActivity implements QRScanner.QRScan
                     return;
                 }
             }
-
-            // **No Database Modification Here**
 
             // Increment scanned item quantity
             scannedItems.put(scannedValue, scannedItems.getOrDefault(scannedValue, 0) + 1);
