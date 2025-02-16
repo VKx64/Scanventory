@@ -1,8 +1,8 @@
-# 📦 InventoryAndroidApp
+# 📦 Scanventory
 
 ## 📖 Project Description
 
-InventoryAndroidApp is an Android application designed to help users manage their inventory efficiently. The app allows users to add items, create groups, and manage orders. It also provides features for scanning QR codes, importing/exporting data, and viewing order history.
+Scanventory is an Android application designed to help users manage their inventory efficiently. The app allows users to add items, create groups, and manage orders. It also provides features for scanning QR codes, importing/exporting data, and viewing order history.
 
 This project was developed for a client to meet their specific inventory management needs.
 
