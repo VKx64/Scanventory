@@ -1,7 +1,5 @@
 # 📦 Scanventory
 
-## 📖 Project Description
-
 Scanventory is an Android application designed to help users manage their inventory efficiently. The app allows users to add items, create groups, and manage orders. It also provides features for scanning QR codes, importing/exporting data, and viewing order history.
 
 This project was developed for a client to meet their specific inventory management needs.
@@ -14,24 +12,6 @@ This project was developed for a client to meet their specific inventory managem
 - View order history
 - Manage item quantities and market-specific quantities
 - Image support for items and groups
-
-## 🛠️ Setup Instructions
-
-### 📋 Dependencies
-
-- Android Studio
-- Java Development Kit (JDK)
-- Gradle
-
-### 🚀 Installation Steps
-
-1. Clone the repository:
-   ```sh
-   git clone https://github.com/VKx64/Scanventory.git
-   ```
-2. Open the project in Android Studio.
-3. Sync the project with Gradle files.
-4. Build and run the project on an Android device or emulator.
 
 ## 📚 Usage Instructions
 
@@ -53,6 +33,24 @@ This project was developed for a client to meet their specific inventory managem
 2. Scan the QR codes of the items to add them to the order.
 3. Select the desired market from the dropdown.
 4. Tap "Complete Order" to finalize the order.
+
+## 🛠️ Setup Instructions
+
+### 📋 Dependencies
+
+- Android Studio
+- Java Development Kit (JDK)
+- Gradle
+
+### 🚀 Installation Steps
+
+1. Clone the repository:
+   ```sh
+   git clone https://github.com/VKx64/Scanventory.git
+   ```
+2. Open the project in Android Studio.
+3. Sync the project with Gradle files.
+4. Build and run the project on an Android device or emulator.
 
 ## 🗄️ Database Structure
 
